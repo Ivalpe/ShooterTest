@@ -1,89 +1,129 @@
 using UnityEngine;
 using System.Collections;
+using TMPro;
 
 public class Weapon : MonoBehaviour
 {
-    public GunRecoil gunRecoil; // referencia al script de retroceso
-
     [Header("References")]
-    public Camera playerCamera;          // la cámara del jugador
-    public Transform muzzlePoint;        // punto de salida del disparo
-    public ParticleSystem muzzleFlash;   // efecto de fogonazo
-    public AudioSource audioSource;      // fuente de audio
-    public AudioClip fireSFX;            // sonido de disparo
-    public GameObject hitEffectPrefab;   // partícula al impactar
+    public Camera playerCamera;
+    public Transform muzzlePoint;
+    public ParticleSystem muzzleFlash;
+    public AudioSource audioSource;
+    public AudioClip fireSFX;
+    public GameObject hitEffectPrefab;
+    public TextMeshProUGUI ammoText;
 
     [Header("Stats")]
-    public float range = 200f;           // distancia máxima del disparo
-    public float fireRate = 10f;         // balas por segundo
-    public bool automatic = true;        // mantener click o solo un disparo
+    public int damage = 10;
+    public float range = 200f;
+    public float fireRate = 10f;
+    public bool automatic = true;
 
-    public GameObject bulletPrefab;   // asigna tu prefab de bala
+    [Header("Ammo")]
+    public int magazineSize = 30;
+    public float reloadTime = 2f;
+    private int bulletsLeft;
+    private bool reloading;
+
+    [Header("Projectile Mode")]
+    public bool useProjectile = false;
+    public GameObject bulletPrefab;
     public float bulletSpeed = 50f;
+
+    [Header("Spread")]
+    public float spreadAngle = 2f;
+    public float spreadIncreaseRate = 0.5f;
+    public float spreadRecoveryRate = 1f;
+    private float currentSpread = 0f;
 
     private float nextFireTime;
 
-    public float spreadAngle = 2f;       // dispersión máxima
-    public float spreadIncreaseRate = 0.5f; // cuánto aumenta por segundo disparando
-    public float spreadRecoveryRate = 1f;   // cuánto se recupera por segundo sin disparar
-
-    private float currentSpread = 0f;
-    private bool isFiring = false;
-
-
-    void Awake()
+    private void Awake()
     {
         if (playerCamera == null)
-            playerCamera = Camera.main;  // por si no la asignas manualmente
+            playerCamera = Camera.main;
+
+        bulletsLeft = magazineSize;
     }
 
-    void Update()
+    private void Update()
     {
+        // Recarga
+        if (Input.GetKeyDown(KeyCode.R) && bulletsLeft < magazineSize && !reloading)
+        {
+            StartCoroutine(Reload());
+            return;
+        }
+
         bool wantsToFire = automatic ? Input.GetButton("Fire1") : Input.GetButtonDown("Fire1");
 
-        if (wantsToFire && Time.time >= nextFireTime)
+        if (wantsToFire && Time.time >= nextFireTime && !reloading && bulletsLeft > 0)
         {
             Fire();
             nextFireTime = Time.time + 1f / fireRate;
         }
 
+        // Control de spread
         if (wantsToFire)
+            currentSpread = Mathf.Min(currentSpread + spreadIncreaseRate * Time.deltaTime, spreadAngle);
+        else
+            currentSpread = Mathf.Max(currentSpread - spreadRecoveryRate * Time.deltaTime, 0f);
+
+        // UI
+        if (ammoText != null)
+            ammoText.SetText(bulletsLeft + " / " + magazineSize);
+    }
+
+    private void Fire()
+    {
+        bulletsLeft--;
+
+        Vector3 shootDir = playerCamera.transform.forward;
+        shootDir = Quaternion.Euler(Random.Range(-currentSpread, currentSpread), Random.Range(-currentSpread, currentSpread), 0) * shootDir;
+
+        if (useProjectile)
         {
-            currentSpread += spreadIncreaseRate * Time.deltaTime;
-            currentSpread = Mathf.Min(currentSpread, spreadAngle); // no superar el máximo
+            // Balas físicas
+            GameObject bullet = Instantiate(bulletPrefab, muzzlePoint.position, muzzlePoint.rotation);
+            Rigidbody rb = bullet.GetComponent<Rigidbody>();
+            if (rb != null)
+                rb.linearVelocity = shootDir * bulletSpeed;
+
+            Destroy(bullet, 5f);
         }
         else
         {
-            currentSpread -= spreadRecoveryRate * Time.deltaTime;
-            currentSpread = Mathf.Max(currentSpread, 0f); // no ir a negativo
-        }
-    }
-
-    void Fire()
-    {
-        GameObject bullet = Instantiate(bulletPrefab, muzzlePoint.position, muzzlePoint.rotation);
-
-        Rigidbody rb = bullet.GetComponent<Rigidbody>();
-        if (rb != null)
-        {
-            float spreadAngle = 2f;
-            Vector3 direction = -muzzlePoint.forward;
-            direction = Quaternion.Euler(
-                Random.Range(-spreadAngle, spreadAngle),
-                Random.Range(-spreadAngle, spreadAngle),
-                0
-            ) * direction;
-
-            rb.linearVelocity = direction * bulletSpeed;
+            // Hitscan (Raycast)
+            if (Physics.Raycast(playerCamera.transform.position, shootDir, out RaycastHit hit, range))
+            {
+                if (hitEffectPrefab != null)
+                    Instantiate(hitEffectPrefab, hit.point, Quaternion.LookRotation(hit.normal));
+                
+                if (hit.collider.CompareTag("Enemy"))
+                {
+                    Enemy enemy = hit.collider.GetComponent<Enemy>();
+                    if (enemy != null)
+                    {
+                        enemy.TakeDamage(20); // daño configurable
+                    }
+                }
+            }
         }
 
-        Destroy(bullet, 5f);
-
+        // Recoil
         GunRecoil recoil = GetComponent<GunRecoil>();
         if (recoil != null) recoil.ApplyRecoil();
 
+        // Efectos
         if (muzzleFlash != null) muzzleFlash.Play();
         if (audioSource != null && fireSFX != null) audioSource.PlayOneShot(fireSFX);
     }
 
+    private IEnumerator Reload()
+    {
+        reloading = true;
+        yield return new WaitForSeconds(reloadTime);
+        bulletsLeft = magazineSize;
+        reloading = false;
+    }
 }

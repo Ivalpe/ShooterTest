@@ -2,26 +2,47 @@ using UnityEngine;
 
 public class Bullet : MonoBehaviour
 {
+    public float speed;
+    public int damage;
     public GameObject bulletHolePrefab;
-    public float lifeTime = 5f;
 
-    void Start()
+    private Rigidbody rb;
+
+    void Awake()
     {
-        Destroy(gameObject, lifeTime);
+        rb = GetComponent<Rigidbody>();
+        rb.linearVelocity = transform.forward * speed;
     }
 
-    void OnCollisionEnter(Collision collision)
+    private void OnCollisionEnter(Collision other)
     {
-        // Instanciar bullet hole si hay prefab
-        if(bulletHolePrefab != null)
+        // Primero comprobamos si es un enemigo
+        if (other.gameObject.CompareTag("Enemy"))
         {
-            ContactPoint contact = collision.contacts[0];
-            Quaternion rot = Quaternion.LookRotation(contact.normal) * Quaternion.Euler(0, 180, 0);
-            GameObject hole = Instantiate(bulletHolePrefab, contact.point + contact.normal * 0.01f, rot);
-            Destroy(hole, 60f);
+            Enemy enemy = other.gameObject.GetComponent<Enemy>();
+            if (enemy != null)
+                enemy.TakeDamage(damage); // restamos vida
+        }
+        else
+        {
+            // Si no es enemigo, hacemos el bullet hole
+            if (bulletHolePrefab != null && other.contacts.Length > 0)
+            {
+                ContactPoint contact = other.contacts[0];
+                Quaternion rot = Quaternion.LookRotation(contact.normal) * Quaternion.Euler(0, 180, 0);
+
+                GameObject hole = Instantiate(
+                    bulletHolePrefab,
+                    contact.point + contact.normal * 0.01f, // pequeño offset para que no se meta en la pared
+                    rot
+                );
+
+                Destroy(hole, 5f);
+            }
         }
 
-        // Destruir la bala
-        Destroy(gameObject);
+        Destroy(gameObject); // destruir bala al impactar
     }
+
+
 }

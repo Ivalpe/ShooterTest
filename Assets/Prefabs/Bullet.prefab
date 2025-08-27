@@ -121,6 +121,7 @@ GameObject:
   - component: {fileID: 8165707708320779998}
   - component: {fileID: 1356274545714617231}
   - component: {fileID: 379464398207873960}
+  - component: {fileID: 2616026075169953151}
   m_Layer: 0
   m_Name: Bullet
   m_TagString: Untagged
@@ -152,7 +153,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6272228469874438129}
   serializedVersion: 4
-  m_Mass: 1
+  m_Mass: 0.01
   m_Drag: 0
   m_AngularDrag: 0.05
   m_CenterOfMass: {x: 0, y: 0, z: 0}
@@ -183,5 +184,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1f9db89e89086c44ea9782c547bea783, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  speed: 5
+  damage: 20
   bulletHolePrefab: {fileID: 6325994230076304660, guid: 8ecd64bd078c7e94aadd2d530f1a53ef, type: 3}
-  lifeTime: 5
+--- !u!65 &2616026075169953151
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6272228469874438129}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.02, y: 0.02, z: 0.02}
+  m_Center: {x: 0, y: 0, z: 0}
