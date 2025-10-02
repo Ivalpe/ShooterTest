@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 
 public class PlayerController : MonoBehaviour
@@ -17,9 +18,12 @@ public class PlayerController : MonoBehaviour
     private CharacterController controller;
     private float yVelocity;
     private float pitch; // vertical rotation (camera only)
+    private Weapon weapon;
+    public TextMeshProUGUI ammoText;
 
     void Awake()
     {
+        weapon = GetComponentInChildren<Weapon>();
         controller = GetComponent<CharacterController>();
         if (playerCamera == null)
         {
@@ -33,6 +37,19 @@ public class PlayerController : MonoBehaviour
     {
         HandleLook();
         HandleMovement();
+
+        if (Input.GetButton("Fire1"))
+        {
+            weapon.TryShoot();
+        }
+
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            weapon.TryReload();
+        }
+
+        if (ammoText != null)
+            ammoText.SetText(weapon.bulletsLeft + " / " + weapon.magazineSize);
     }
 
     void HandleLook()
