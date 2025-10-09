@@ -11,13 +11,13 @@ public class Enemy : MonoBehaviour
     public HitMarker hitMarker;
     public EnemyController gun;
     public List<Transform> wayPoints;
-    NavMeshAgent agent;
+    //NavMeshAgent agent;
 
     public int currentWayPointIndex = 0;
 
     public void Start()
     {
-        agent = GetComponent<NavMeshAgent>();
+        //agent = GetComponent<NavMeshAgent>();
     }
 
     public void Update()
@@ -32,7 +32,7 @@ public class Enemy : MonoBehaviour
             currentWayPointIndex = (currentWayPointIndex + 1) % wayPoints.Count;
         }
 
-        agent.SetDestination(wayPoints[currentWayPointIndex].position);
+        //agent.SetDestination(wayPoints[currentWayPointIndex].position);
     }
 
     public void TakeDamage(int amount)
