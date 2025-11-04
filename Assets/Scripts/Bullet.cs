@@ -21,7 +21,7 @@ public class Bullet : MonoBehaviour
         {
             Enemy enemy = other.gameObject.GetComponent<Enemy>();
             if (enemy != null)
-                enemy.TakeDamage(damage); // restamos vida
+                enemy.TakeDamage(damage); 
         }
         else
         {

@@ -1,73 +1,74 @@
-using NUnit.Framework;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
+using System.Collections.Generic;
+
+// Puedes usar el mismo enum ZoneTeam del script ZonesCapture o definir uno simple aquí
+public enum Faction
+{
+    Blue,
+    Red
+}
 
 public class Enemy : MonoBehaviour
 {
-    Animator anim;
-    public int health = 100;
+    int health = 100;
     public HitMarker hitMarker;
-    public EnemyController gun;
-    public List<Transform> wayPoints;
-    //NavMeshAgent agent;
+    public NavMeshAgent agent;
 
-    public int currentWayPointIndex = 0;
+    public ZonesManager zonesManager;
 
-    public void Start()
+    public Faction myTeam;
+    private ZonesCapture currentTargetZone = null;
+    public float decisionDelay = 2f;
+    private float nextDecisionTime;
+
+
+    void Start()
     {
-        //agent = GetComponent<NavMeshAgent>();
+        nextDecisionTime = Time.time;
     }
 
-    public void Update()
+    void Update()
     {
-        if (wayPoints.Count == 0) return;
-
-        float distanceToWayPoint = Vector3.Distance(wayPoints[currentWayPointIndex].position, transform.position);
-
-        if (distanceToWayPoint < 3f || wayPoints[currentWayPointIndex].GetComponentInChildren<ZonesCapture>().currentTeam == ZonesCapture.ZoneTeam.Red)
+        if (Time.time >= nextDecisionTime)
         {
-            wayPoints[currentWayPointIndex].GetComponentInChildren<ZonesCapture>().SetTeam(ZonesCapture.ZoneTeam.Red);
-            currentWayPointIndex = (currentWayPointIndex + 1) % wayPoints.Count;
+            DecideTargetAndMove();
+            nextDecisionTime = Time.time + decisionDelay;
         }
+    }
 
-        //agent.SetDestination(wayPoints[currentWayPointIndex].position);
+    private void DecideTargetAndMove()
+    {
+        // 1. Llama al método de búsqueda del ZonesManager
+        // Nota: Convertimos nuestro 'Faction' a 'ZonesCapture.ZoneTeam' para que sea compatible.
+        ZonesCapture.ZoneTeam zoneTeam = (ZonesCapture.ZoneTeam)myTeam;
+
+        currentTargetZone = zonesManager.FindBestTargetZone(zoneTeam, transform.position);
+
+        // 2. Si hay un objetivo válido, muévete hacia él
+        if (currentTargetZone != null)
+        {
+            agent.SetDestination(currentTargetZone.transform.position);
+            // Debug.Log($"Enemigo {myTeam} dirigiéndose a la zona: {currentTargetZone.gameObject.name}");
+        }
+        else
+        {
+            // Opcional: Si no hay objetivos, haz que el agente se detenga o defienda su posición actual
+            agent.isStopped = true;
+        }
     }
 
     public void TakeDamage(int amount)
     {
+        // ... (Tu código de daño permanece igual) ...
         health -= amount;
 
-        if (hitMarker != null)
+        if (!hitMarker.isActiveAndEnabled)
             hitMarker.Show();
 
         if (health <= 0)
         {
-            Die();
+            Destroy(gameObject);
         }
-    }
-
-    private void Awake()
-    {
-        anim = GetComponent<Animator>();
-        StartCoroutine(RandomDance());
-    }
-
-    private IEnumerator RandomDance()
-    {
-        while (true)
-        {
-            yield return new WaitForSeconds(Random.Range(2f, 5f)); // espera 2-5 segundos
-
-            anim.SetTrigger("RifleJump");
-        }
-    }
-
-    void Die()
-    {
-        // Aquí puedes poner animación o efectos
-        Debug.Log(name + " murió!");
-        Destroy(gameObject);
     }
 }
