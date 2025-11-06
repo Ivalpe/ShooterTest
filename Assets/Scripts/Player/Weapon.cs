@@ -35,38 +35,26 @@ public class Weapon : MonoBehaviour
     private float currentSpread = 0f;
 
     private float nextFireTime;
+    private GameObject owner;
 
     private void Awake()
     {
         bulletsLeft = magazineSize;
     }
+    public void SetOwner(GameObject newOwner)
+    {
+        owner = newOwner;
+    }
 
     private void Update()
     {
-        // Recarga
-        /*if (Input.GetKeyDown(KeyCode.R) && bulletsLeft < magazineSize && !reloading)
-        {
-            StartCoroutine(Reload());
-            return;
-        }*/
-
         bool wantsToFire = automatic ? Input.GetButton("Fire1") : Input.GetButtonDown("Fire1");
-
-        /*if (wantsToFire && Time.time >= nextFireTime && !reloading && bulletsLeft > 0)
-        {
-            Fire();
-            nextFireTime = Time.time + 1f / fireRate;
-        }*/
-
-        // Control de spread
-        if (wantsToFire)
-            currentSpread = Mathf.Min(currentSpread + spreadIncreaseRate * Time.deltaTime, spreadAngle);
-        else
-            currentSpread = Mathf.Max(currentSpread - spreadRecoveryRate * Time.deltaTime, 0f);
     }
 
     public void TryShoot()
     {
+        currentSpread = Mathf.Min(currentSpread + spreadIncreaseRate * Time.deltaTime, spreadAngle);
+
         if (Time.time >= nextFireTime && !reloading && bulletsLeft > 0)
         {
             Fire();
@@ -90,10 +78,31 @@ public class Weapon : MonoBehaviour
         Vector3 shootDir = muzzlePoint.forward;
         shootDir = Quaternion.Euler(Random.Range(-currentSpread, currentSpread), Random.Range(-currentSpread, currentSpread), 0) * shootDir;
 
+        Faction shootingTeam = Faction.Blue;
+        currentSpread = Mathf.Max(currentSpread - spreadRecoveryRate * Time.deltaTime, 0f);
+
+        if (owner != null)
+        {
+            Enemy enemyOwner = owner.GetComponent<Enemy>();
+            if (enemyOwner != null)
+            {
+                shootingTeam = enemyOwner.myTeam;
+            }
+        }
+
         if (useProjectile)
         {
-            // Create Bullets
             GameObject bullet = Instantiate(bulletPrefab, muzzlePoint.position, muzzlePoint.rotation);
+
+            // --- PASAR LA INFORMACIÓN CLAVE A LA BALA ---
+            Bullet bulletScript = bullet.GetComponent<Bullet>();
+            if (bulletScript != null)
+            {
+                bulletScript.damage = damage;         // Asegurarse de que la bala tenga el daño correcto
+                bulletScript.killerTeam = shootingTeam; // Pasar la facción del que disparó
+            }
+            // ---------------------------------------------
+
             Rigidbody rb = bullet.GetComponent<Rigidbody>();
             if (rb != null)
                 rb.linearVelocity = shootDir * bulletSpeed;
@@ -102,18 +111,49 @@ public class Weapon : MonoBehaviour
         }
         else
         {
-            // Hitscan (Raycast)
             if (Physics.Raycast(muzzlePoint.transform.position, shootDir, out RaycastHit hit, range))
             {
                 if (hitEffectPrefab != null)
                     Instantiate(hitEffectPrefab, hit.point, Quaternion.LookRotation(hit.normal));
-                
-                if (hit.collider.CompareTag("Enemy"))
+
+                // --- 1. Lógica para dañar al ENEMIGO ---
+                Enemy enemy = hit.collider.GetComponent<Enemy>();
+
+                if (enemy != null)
                 {
-                    Enemy enemy = hit.collider.GetComponent<Enemy>();
-                    if (enemy != null)
+                    Enemy shooterEnemy = owner.GetComponent<Enemy>();
+                    Faction shooterTeam = (shooterEnemy != null) ? shooterEnemy.myTeam : Faction.Blue; // Asumo que el jugador es Azul si el dueño no es un enemigo
+
+                    if (shooterEnemy != null && shooterEnemy.myTeam != enemy.myTeam)
                     {
-                        enemy.TakeDamage(20); // DMG
+                        // El enemigo dispara al enemigo
+                        enemy.TakeDamage(damage, shooterTeam);
+                    }
+                    else if (shooterEnemy == null)
+                    {
+                        // El jugador dispara al enemigo
+                        enemy.TakeDamage(damage, Faction.Blue); //Player Shoots Enemy
+                    }
+                }
+
+                // --- 2. Lógica para dañar al JUGADOR ---
+                // Buscamos el componente PlayerController en el objeto golpeado
+                PlayerController player = hit.collider.GetComponent<PlayerController>();
+
+                if (player != null)
+                {
+                    // Asumimos que el jugador no puede dañar al jugador, 
+                    // solo un enemigo puede dañar al jugador.
+                    Enemy shooterEnemy = owner.GetComponent<Enemy>();
+
+                    if (shooterEnemy != null)
+                    {
+                        // Nota: Debes tener un método TakeDamage en PlayerController
+                        // Si playerController tiene un TakeDamage, se llamaría así:
+                        // player.TakeDamage(damage); 
+                        Debug.Log("Jugador golpeado. ¡Implementar TakeDamage en PlayerController!");
+                        // Alternativamente, si playerController es el script principal
+                        // y tiene la vida, asegúrate de que tiene un método de daño.
                     }
                 }
             }

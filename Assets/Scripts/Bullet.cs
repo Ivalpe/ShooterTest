@@ -5,27 +5,43 @@ public class Bullet : MonoBehaviour
     public float speed;
     public int damage;
     public GameObject bulletHolePrefab;
+    public Faction killerTeam;
 
     private Rigidbody rb;
 
     void Awake()
     {
         rb = GetComponent<Rigidbody>();
-        rb.linearVelocity = transform.forward * speed;
+        Destroy(this, 3f);
     }
 
     private void OnCollisionEnter(Collision other)
     {
-        // Primero comprobamos si es un enemigo
-        if (other.gameObject.CompareTag("Enemy"))
+        Enemy enemy = other.gameObject.GetComponent<Enemy>();
+        if (enemy != null)
         {
-            Enemy enemy = other.gameObject.GetComponent<Enemy>();
-            if (enemy != null)
-                enemy.TakeDamage(damage); 
+            // Solo daña si la facción de la bala es diferente a la facción del enemigo
+            if (killerTeam != enemy.myTeam)
+            {
+                // NOTA: La función TakeDamage en Enemy.cs DEBE aceptar el killerTeam
+                enemy.TakeDamage(damage, killerTeam);
+            }
         }
-        else
+
+        PlayerController player = other.gameObject.GetComponent<PlayerController>();
+        if (player != null)
         {
-            // Si no es enemigo, hacemos el bullet hole
+            // Asumimos que el jugador es del equipo Blue. Si la bala viene de Red, hay daño.
+            if (killerTeam == Faction.Red)
+            {
+                // NOTA: La función TakeDamage en PlayerController DEBE aceptar el killerTeam
+                //player.TakeDamage(damage, killerTeam);
+            }
+        }
+
+        // 3. Crear el agujero de bala si no es una unidad
+        if (enemy == null && player == null)
+        {
             if (bulletHolePrefab != null && other.contacts.Length > 0)
             {
                 ContactPoint contact = other.contacts[0];
@@ -33,15 +49,15 @@ public class Bullet : MonoBehaviour
 
                 GameObject hole = Instantiate(
                     bulletHolePrefab,
-                    contact.point + contact.normal * 0.01f, // pequeño offset para que no se meta en la pared
+                    contact.point + contact.normal * 0.01f,
                     rot
                 );
 
-                Destroy(hole, 5f);
+                Destroy(hole, 1f);
             }
         }
 
-        Destroy(gameObject); // destruir bala al impactar
+        Destroy(gameObject);
     }
 
 

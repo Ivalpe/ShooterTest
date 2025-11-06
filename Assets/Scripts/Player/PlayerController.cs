@@ -24,6 +24,7 @@ public class PlayerController : MonoBehaviour
     void Awake()
     {
         weapon = GetComponentInChildren<Weapon>();
+        weapon.spreadAngle = 100;
         controller = GetComponent<CharacterController>();
         if (playerCamera == null)
         {
