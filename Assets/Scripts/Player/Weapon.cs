@@ -62,7 +62,6 @@ public class Weapon : MonoBehaviour
         }
 
     }
-
     public void TryReload()
     {
         if (bulletsLeft < magazineSize && !reloading)
@@ -90,73 +89,29 @@ public class Weapon : MonoBehaviour
             }
         }
 
-        if (useProjectile)
+        if (BulletPooler.Instance != null)
         {
-            GameObject bullet = Instantiate(bulletPrefab, muzzlePoint.position, muzzlePoint.rotation);
+            // 1. Obtener la bala del Pooler en lugar de instanciarla
+            GameObject bulletGO = BulletPooler.Instance.GetBullet();
 
-            // --- PASAR LA INFORMACIÓN CLAVE A LA BALA ---
-            Bullet bulletScript = bullet.GetComponent<Bullet>();
+            // 2. Posicionar y orientar la bala
+            bulletGO.transform.position = muzzlePoint.position;
+            bulletGO.transform.rotation = muzzlePoint.rotation;
+
+            // 3. Asignar propiedades y disparar
+            Bullet bulletScript = bulletGO.GetComponent<Bullet>();
             if (bulletScript != null)
             {
-                bulletScript.damage = damage;         // Asegurarse de que la bala tenga el daño correcto
-                bulletScript.killerTeam = shootingTeam; // Pasar la facción del que disparó
+                bulletScript.damage = damage;
+                bulletScript.killerTeam = shootingTeam;
             }
-            // ---------------------------------------------
 
-            Rigidbody rb = bullet.GetComponent<Rigidbody>();
+            Rigidbody rb = bulletGO.GetComponent<Rigidbody>();
             if (rb != null)
                 rb.linearVelocity = shootDir * bulletSpeed;
 
-            Destroy(bullet, 5f);
-        }
-        else
-        {
-            if (Physics.Raycast(muzzlePoint.transform.position, shootDir, out RaycastHit hit, range))
-            {
-                if (hitEffectPrefab != null)
-                    Instantiate(hitEffectPrefab, hit.point, Quaternion.LookRotation(hit.normal));
-
-                // --- 1. Lógica para dañar al ENEMIGO ---
-                Enemy enemy = hit.collider.GetComponent<Enemy>();
-
-                if (enemy != null)
-                {
-                    Enemy shooterEnemy = owner.GetComponent<Enemy>();
-                    Faction shooterTeam = (shooterEnemy != null) ? shooterEnemy.myTeam : Faction.Blue; // Asumo que el jugador es Azul si el dueño no es un enemigo
-
-                    if (shooterEnemy != null && shooterEnemy.myTeam != enemy.myTeam)
-                    {
-                        // El enemigo dispara al enemigo
-                        enemy.TakeDamage(damage, shooterTeam);
-                    }
-                    else if (shooterEnemy == null)
-                    {
-                        // El jugador dispara al enemigo
-                        enemy.TakeDamage(damage, Faction.Blue); //Player Shoots Enemy
-                    }
-                }
-
-                // --- 2. Lógica para dañar al JUGADOR ---
-                // Buscamos el componente PlayerController en el objeto golpeado
-                PlayerController player = hit.collider.GetComponent<PlayerController>();
-
-                if (player != null)
-                {
-                    // Asumimos que el jugador no puede dañar al jugador, 
-                    // solo un enemigo puede dañar al jugador.
-                    Enemy shooterEnemy = owner.GetComponent<Enemy>();
-
-                    if (shooterEnemy != null)
-                    {
-                        // Nota: Debes tener un método TakeDamage en PlayerController
-                        // Si playerController tiene un TakeDamage, se llamaría así:
-                        // player.TakeDamage(damage); 
-                        Debug.Log("Jugador golpeado. ¡Implementar TakeDamage en PlayerController!");
-                        // Alternativamente, si playerController es el script principal
-                        // y tiene la vida, asegúrate de que tiene un método de daño.
-                    }
-                }
-            }
+            // NOTA: ELIMINAMOS la línea 'Destroy(bulletGO, 5f);' de aquí.
+            // La bala se destruirá por colisión o por su propio script (ver paso 3).
         }
 
         // Recoil

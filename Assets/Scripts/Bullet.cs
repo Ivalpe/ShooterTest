@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 public class Bullet : MonoBehaviour
@@ -6,13 +7,25 @@ public class Bullet : MonoBehaviour
     public int damage;
     public GameObject bulletHolePrefab;
     public Faction killerTeam;
+    public float maxLifeTime = 3f;
 
     private Rigidbody rb;
 
     void Awake()
     {
         rb = GetComponent<Rigidbody>();
-        Destroy(this, 3f);
+    }
+
+    void OnEnable() // Se llama cuando la bala es tomada del pool y activada
+    {
+        // Comenzar el temporizador de seguridad para las balas perdidas
+        StartCoroutine(AutoReturnToPool());
+    }
+
+    void OnDisable() // Se llama cuando la bala es devuelta y desactivada
+    {
+        // Detener la corrutina para que no intente devolver una bala desactivada
+        StopAllCoroutines();
     }
 
     private void OnCollisionEnter(Collision other)
@@ -57,7 +70,24 @@ public class Bullet : MonoBehaviour
             }
         }
 
-        Destroy(gameObject);
+        StopAllCoroutines();
+
+        // 2. DEVOLVER AL POOL
+        if (BulletPooler.Instance != null)
+            BulletPooler.Instance.ReturnBullet(gameObject); // Devolver al pool
+
+
+    }
+
+    IEnumerator AutoReturnToPool()
+    {
+        yield return new WaitForSeconds(maxLifeTime);
+
+        // Solo devolver al pool si la bala no ha colisionado
+        if (gameObject.activeInHierarchy && BulletPooler.Instance != null)
+        {
+            BulletPooler.Instance.ReturnBullet(gameObject);
+        }
     }
 
 

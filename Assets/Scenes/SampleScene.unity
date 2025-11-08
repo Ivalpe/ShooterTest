@@ -1119,6 +1119,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8c600a8f05f13834ca58f986d7b9e50a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  currentHealth: 0
   gameManagerInstance: {fileID: 1280724210}
   moveSpeed: 5
   sprintMultiplier: 1.5
@@ -3155,6 +3156,52 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 942386865516021016, guid: 12786b453b3a7cc4a815f43857ab7460, type: 3}
   m_PrefabInstance: {fileID: 1322868606}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &387899805
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 387899807}
+  - component: {fileID: 387899806}
+  m_Layer: 0
+  m_Name: BulletPooler
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &387899806
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 387899805}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d6d67f870645b5e4282ee6484dfbaa30, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  bulletPrefab: {fileID: 6272228469874438129, guid: 8a996f12f23d29f4ab2f1f3aeaf477c3, type: 3}
+  poolSize: 100
+--- !u!4 &387899807
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 387899805}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1.1960676, y: 1.8459997, z: -44.459}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &389142042
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -11564,3 +11611,4 @@ SceneRoots:
   - {fileID: 100409767}
   - {fileID: 1751099056}
   - {fileID: 1280724211}
+  - {fileID: 387899807}
