@@ -1058,6 +1058,7 @@ GameObject:
   - component: {fileID: 120778559}
   - component: {fileID: 120778558}
   - component: {fileID: 120778560}
+  - component: {fileID: 120778561}
   m_Layer: 9
   m_Name: Player
   m_TagString: Untagged
@@ -1118,6 +1119,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8c600a8f05f13834ca58f986d7b9e50a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  gameManagerInstance: {fileID: 1280724210}
   moveSpeed: 5
   sprintMultiplier: 1.5
   jumpHeight: 1.5
@@ -1127,6 +1129,29 @@ MonoBehaviour:
   minPitch: -89
   maxPitch: 89
   ammoText: {fileID: 2044679914}
+--- !u!136 &120778561
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 120778557}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.53
+  m_Height: 2.06
+  m_Direction: 1
+  m_Center: {x: 0, y: 0, z: 0.009}
 --- !u!1001 &124312902
 PrefabInstance:
   m_ObjectHideFlags: 0

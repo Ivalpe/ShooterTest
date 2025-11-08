@@ -35,7 +35,7 @@ public class Bullet : MonoBehaviour
             if (killerTeam == Faction.Red)
             {
                 // NOTA: La función TakeDamage en PlayerController DEBE aceptar el killerTeam
-                //player.TakeDamage(damage, killerTeam);
+                player.TakeDamage(damage, killerTeam);
             }
         }
 

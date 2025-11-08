@@ -144,19 +144,32 @@ public class GameManager : MonoBehaviour
     {
         yield return new WaitForSeconds(respawnDelay);
 
-        // 5. ¡COMPROBACIÓN DE LÍMITE AL FINAL DE LA ESPERA!
-        // Solo hacemos el spawn si el equipo aún no ha alcanzado su límite máximo.
         if (team == Faction.Blue && aliveBlueUnits.Count < initialBlueUnits)
-        {
             SpawnNewUnit(team);
-        }
         else if (team == Faction.Red && aliveRedUnits.Count < initialRedUnits)
-        {
             SpawnNewUnit(team);
-        }
-        else
+
+    }
+    public void HandlePlayerDeath(GameObject playerGO, Faction playerTeam, Faction killerTeam)
+    {
+        if (killerTeam == Faction.Red)
+            redTeamKills++;
+
+        StartCoroutine(RespawnPlayerCoroutine(playerGO));
+    }
+
+    private IEnumerator RespawnPlayerCoroutine(GameObject playerGO)
+    {
+        yield return new WaitForSeconds(respawnDelay);
+
+        if (blueSpawnPoints != null && blueSpawnPoints.Length > 0)
         {
-            Debug.Log($"Equipo {team} ya tiene su número máximo ({initialBlueUnits} unidades) antes del respawn.");
+            Transform spawnPoint = blueSpawnPoints[Random.Range(0, blueSpawnPoints.Length)];
+            PlayerController pc = playerGO.GetComponent<PlayerController>();
+
+            if (pc != null)
+                pc.Respawn(spawnPoint.position);
+
         }
     }
 }

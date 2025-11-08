@@ -3,6 +3,11 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
+    private int maxHealth = 100;
+    public int currentHealth;
+    private Faction playerTeam = Faction.Blue;
+    public GameManager gameManagerInstance;
+
     [Header("Movement")]
     public float moveSpeed = 5f;
     public float sprintMultiplier = 1.5f;
@@ -23,6 +28,8 @@ public class PlayerController : MonoBehaviour
 
     void Awake()
     {
+        currentHealth = maxHealth;
+
         weapon = GetComponentInChildren<Weapon>();
         weapon.spreadAngle = 100;
         controller = GetComponent<CharacterController>();
@@ -36,21 +43,45 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
+        if (currentHealth <= 0)
+            return;
+
         HandleLook();
         HandleMovement();
 
+        //Fire
         if (Input.GetButton("Fire1"))
-        {
             weapon.TryShoot();
-        }
 
+        //Reload
         if (Input.GetKeyDown(KeyCode.R))
-        {
             weapon.TryReload();
-        }
 
         if (ammoText != null)
             ammoText.SetText(weapon.bulletsLeft + " / " + weapon.magazineSize);
+    }
+    public void TakeDamage(int amount, Faction killerTeam)
+    {
+        if (currentHealth <= 0) return;
+
+        currentHealth -= amount;
+        Debug.Log($"Jugador golpeado por Equipo {killerTeam}. Vida restante: {currentHealth}");
+
+        if (currentHealth <= 0)
+        {
+            this.enabled = false;
+
+            gameManagerInstance.HandlePlayerDeath(gameObject, playerTeam, killerTeam);
+        }
+    }
+    public void Respawn(Vector3 spawnPosition)
+    {
+        transform.position = spawnPosition;
+
+        currentHealth = maxHealth;
+        this.enabled = true; // Habilitar el script
+        controller.enabled = true; // Habilitar movimiento
+        yVelocity = 0f;
     }
 
     void HandleLook()

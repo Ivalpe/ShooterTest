@@ -96,32 +96,68 @@ public class Enemy : MonoBehaviour
     {
         if (currentWeapon == null) return;
 
+        if (currentWeapon.bulletsLeft <= 0)
+            currentWeapon.TryReload();
+
+
         // 1. Buscar objetivos en el rango de ataque
         Collider[] targets = Physics.OverlapSphere(transform.position, attackRange, targetMask);
 
-        // Por simplicidad, tomaremos el primer objetivo válido (no es la mejor IA, pero funciona)
-        if (targets.Length > 0)
-        {
-            targetPlayer = targets[0].transform;
+        Transform bestTarget = null;
+        float closestDistance = float.MaxValue;
 
-            // 2. Orientar al objetivo
-            Vector3 directionToTarget = (targetPlayer.position - transform.position).normalized;
-            // Solo rotamos en el eje Y para no inclinar al enemigo
+        // 2. Iterar para encontrar el objetivo más cercano Y VIVO
+        foreach (Collider targetCollider in targets)
+        {
+            // Intentar obtener el script del JUGADOR
+            PlayerController player = targetCollider.GetComponent<PlayerController>();
+
+            // Intentar obtener el script de otro ENEMIGO
+            Enemy otherEnemy = targetCollider.GetComponent<Enemy>();
+
+            bool isTargetAlive = false;
+
+            // Comprobación de vida
+            if (player != null)
+            {
+                // 
+                // Si el PlayerController tiene una variable pública de salud, léela
+                // Asumimos que la salud se gestiona internamente en PlayerController
+                isTargetAlive = player.currentHealth > 0;
+            }
+            else if (otherEnemy != null)
+            {
+                // El fuego amigo ya está controlado en el arma, pero confirmamos que esté vivo.
+                isTargetAlive = otherEnemy.health > 0;
+            }
+
+            // Si el objetivo está vivo y es el más cercano hasta ahora
+            if (isTargetAlive)
+            {
+                float distance = (targetCollider.transform.position - transform.position).sqrMagnitude;
+                if (distance < closestDistance)
+                {
+                    closestDistance = distance;
+                    bestTarget = targetCollider.transform;
+                }
+            }
+        }
+
+        // 3. Si se encontró un objetivo VIVO, atacar
+        if (bestTarget != null)
+        {
+            // Orientar al objetivo
+            Vector3 directionToTarget = (bestTarget.position - transform.position).normalized;
             Quaternion lookRotation = Quaternion.LookRotation(new Vector3(directionToTarget.x, 0, directionToTarget.z));
             transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * 5f);
 
-            // 3. Detener movimiento y disparar
+            // Detener movimiento y disparar
             agent.isStopped = true;
-            currentWeapon.TryShoot(); // El arma ya maneja la cadencia de fuego
-
-            if (currentWeapon.bulletsLeft <= 0)
-            {
-                currentWeapon.TryReload();
-            }
+            currentWeapon.TryShoot();
         }
         else
         {
-            // Si no hay objetivos, reanudar la marcha hacia la zona
+            // Si no hay objetivos vivos cerca, reanudar la marcha hacia la zona
             agent.isStopped = false;
         }
     }
